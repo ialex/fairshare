@@ -11,7 +11,7 @@ export interface Grant {
   name: string;
   amount: number;
   issued: string;
-  type: "common";
+  type: "common" | "preferred";
 }
 export interface Shareholder {
   id: number;

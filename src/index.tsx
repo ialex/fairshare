@@ -15,7 +15,7 @@ if (process.env.NODE_ENV !== "test") {
 const queryClient = new QueryClient();
 
 ReactDOM.render(
-  <React.StrictMode>
+  <React.StrictMode> 
     <QueryClientProvider client={queryClient}>
       <ChakraProvider>
         <Router>

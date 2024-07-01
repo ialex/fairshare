@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Route,
   Routes,
@@ -29,6 +29,7 @@ import {
   Spinner,
   Select,
   Badge,
+  useToast,
 } from "@chakra-ui/react";
 import produce from "immer";
 import { useContext } from "react";
@@ -55,6 +56,8 @@ export function UserStep() {
     e.preventDefault();
     navigate("../company");
   }
+
+  // Show error if no username or email provided
 
   return (
     <Stack as="form" onSubmit={onSubmt} spacing="4">
@@ -95,13 +98,20 @@ export function UserStep() {
 }
 
 export function CompanyStep() {
-  const { companyName, dispatch } = useContext(OnboardingContext);
+  const { companyName, email, dispatch } = useContext(OnboardingContext);
   const navigate = useNavigate();
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     navigate("/start/shareholders");
   }
+
+  // UX show error if company name is empty button is not disabled
+  useEffect(() => {
+    if (!email) {
+      navigate('/start/user');
+    }
+  }, [email, navigate]);
 
   return (
     <Stack as="form" onSubmit={onSubmit} spacing="4">
@@ -123,15 +133,36 @@ export function CompanyStep() {
   );
 }
 
+type ShareholderGroup = 'investor' | 'founder' | 'employee';
+
 export function ShareholdersStep() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { shareholders, companyName, dispatch } = useContext(OnboardingContext);
   const [newShareholder, setNewShareholder] = React.useState<
     Omit<Shareholder, "id" | "grants">
   >({ name: "", group: "employee" });
+  const navigate = useNavigate();
+  const toast = useToast();
+  const firstShareHolderId = Object.keys(shareholders)[0];
+
+  useEffect(() => {
+    if (!companyName) {
+      navigate('/start/company');
+    }
+  }, [companyName, navigate]);
 
   function submitNewShareholder(e: React.FormEvent) {
     e.preventDefault();
+    if (!newShareholder.name.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Shareholder name cannot be empty.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      return;
+    }
     dispatch({ type: "addShareholder", payload: newShareholder });
     setNewShareholder({ name: "", group: "employee" });
     onClose();
@@ -140,7 +171,6 @@ export function ShareholdersStep() {
   return (
     <Stack>
       <Text color="teal.400">
-        {/* TODO: redirect to previous step if company name isn't there*/}
         Who are <strong>{companyName}</strong>'s shareholders?
       </Text>
       <Stack divider={<StackDivider borderColor="teal-200" />}>
@@ -160,14 +190,13 @@ export function ShareholdersStep() {
                   setNewShareholder((s) => ({ ...s, name: e.target.value }))
                 }
               />
-              {/* TODO: bad any */}
               <Select
                 placeholder="Type of shareholder"
                 value={newShareholder.group}
                 onChange={(e) =>
                   setNewShareholder((s) => ({
                     ...s,
-                    group: e.target.value as any,
+                    group: e.target.value as ShareholderGroup,
                   }))
                 }
               >
@@ -185,9 +214,10 @@ export function ShareholdersStep() {
       <Button colorScheme="teal" variant="outline" onClick={onOpen}>
         Add Shareholder
       </Button>
-      <Button as={Link} to="/start/grants" colorScheme="teal">
+      {/* disabled props on button was not applying disabled styling when enabled */}
+      {firstShareHolderId && <Button as={Link} to={`/start/grants/${firstShareHolderId}`} colorScheme="teal">
         Next
-      </Button>
+      </Button>}
     </Stack>
   );
 }
@@ -210,7 +240,7 @@ export function ShareholderGrantsStep() {
   }
   const nextLink = !shareholders[shareholder.id + 1]
     ? `../done`
-    : `../../grants/${shareholder.id + 1}`;
+    : `/start/grants/${shareholder.id + 1}`;
 
   function submitGrant(e: React.FormEvent) {
     e.preventDefault();
@@ -224,7 +254,7 @@ export function ShareholderGrantsStep() {
     onClose();
     setDraftGrant({ name: "", amount: 0, issued: "", type: "common" });
   }
-  console.log(shareholder)
+
 
   return (
     <Stack>
@@ -288,7 +318,7 @@ export function ShareholderGrantsStep() {
                 onChange={(e) =>
                   setDraftGrant((g) => ({
                     ...g,
-                    amount: parseInt(e.target.value, 3),
+                    amount: parseInt(e.target.value, 10),
                   }))
                 }
               />

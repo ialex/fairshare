@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import { VictoryPie } from "victory";
 import { Link, useParams } from "react-router-dom";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
@@ -22,10 +22,32 @@ import {
   AlertTitle,
   AlertIcon,
   Select,
+  IconButton,
 } from "@chakra-ui/react";
+import { AuthContext } from "../App";
 import { Grant, Shareholder } from "../types";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import produce from "immer";
+
+// Moved this outside to avoid being declared on each render and make component harder to read
+function getGroupData(shareholders: { [dataID: number]: Shareholder }, grants: { [dataID: number]: Grant }) {
+  return ["investor", "founder", "employee"].map((group) => ({
+    x: group,
+    y: Object.values(shareholders)
+      .filter((s) => s.group === group)
+      .flatMap((s) => s.grants)
+      .reduce((acc, grantID) => acc + grants[grantID].amount, 0),
+  }));
+}
+
+function getInvestorData(shareholders: { [dataID: number]: Shareholder }, grants: { [dataID: number]: Grant }) {
+  return Object.values(shareholders)
+    .map((s) => ({
+      x: s.name,
+      y: s.grants.reduce((acc, grantID) => acc + grants[grantID].amount, 0),
+    }))
+    .filter((e) => e.y > 0);
+}
 
 export function Dashboard() {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -34,6 +56,7 @@ export function Dashboard() {
     Omit<Shareholder, "id" | "grants">
   >({ name: "", group: "employee" });
   const { mode } = useParams();
+  const { deauthroize } = useContext(AuthContext);
 
   const shareholderMutation = useMutation<
     Shareholder,
@@ -91,35 +114,6 @@ export function Dashboard() {
     );
   }
 
-  // TODO: why are these inline?
-  function getGroupData() {
-    if (!shareholder.data || !grant.data) {
-      return [];
-    }
-    return ["investor", "founder", "employee"].map((group) => ({
-      x: group,
-      y: Object.values(shareholder?.data ?? {})
-        .filter((s) => s.group === group)
-        .flatMap((s) => s.grants)
-        .reduce((acc, grantID) => acc + grant.data[grantID].amount, 0),
-    }));
-  }
-
-  function getInvestorData() {
-    if (!shareholder.data || !grant.data) {
-      return [];
-    }
-    return Object.values(shareholder.data)
-      .map((s) => ({
-        x: s.name,
-        y: s.grants.reduce(
-          (acc, grantID) => acc + grant.data[grantID].amount,
-          0
-        ),
-      }))
-      .filter((e) => e.y > 0);
-  }
-
   async function submitNewShareholder(e: React.FormEvent) {
     e.preventDefault();
     await shareholderMutation.mutateAsync(newShareholder);
@@ -155,11 +149,12 @@ export function Dashboard() {
           >
             By Group
           </Button>
+          <IconButton aria-label='Log out' colorScheme='teal' onClick={() => { deauthroize() }}  icon={<ArrowForwardIcon />} />
         </Stack>
       </Stack>
       <VictoryPie
         colorScale="blue"
-        data={mode === "investor" ? getGroupData() : getInvestorData()}
+        data={mode === "investor" ? getGroupData(shareholder.data, grant.data) : getInvestorData(shareholder.data, grant.data)}
       />
       <Stack divider={<StackDivider />}>
         <Heading>Shareholders</Heading>
