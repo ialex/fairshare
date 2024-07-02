@@ -32,6 +32,7 @@ export interface SharePrice {
   common: float;
   preferred: float;
 }
+export type ShareTypeFilter = ShareType | "";
 
 export interface OnboardingFields {
   companyName: string;

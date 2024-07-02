@@ -25,37 +25,40 @@ import {
   IconButton,
 } from "@chakra-ui/react";
 import { AuthContext } from "../App";
-import { GrantData, Group, SharePrice, Shareholder, ShareholderData } from "../types";
+import { GrantData, Group, SharePrice, ShareTypeFilter, Shareholder, ShareholderData } from "../types";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import produce from "immer";
 // import { group } from "console";
 
 // Moved this outside to avoid being declared on each render and make component harder to read
-function getGroupData(shareholders: ShareholderData, grants: GrantData) {
+function getGroupData(shareholders: ShareholderData, grants: GrantData, shareType: ShareTypeFilter) {
   return ["investor", "founder", "employee"].map((group) => ({
     x: group,
     y: Object.values(shareholders)
       .filter((s) => s.group === group)
       .flatMap((s) => s.grants)
+      .filter((grantID) => shareType === "" ? true : grants[grantID].type === shareType)
       .reduce((acc, grantID) => acc + grants[grantID].amount, 0),
   }));
 }
 
-function getInvestorData(shareholders: ShareholderData, grants: GrantData) {
+function getInvestorData(shareholders: ShareholderData, grants: GrantData, shareType: ShareTypeFilter) {
   return Object.values(shareholders)
     .map((s) => ({
       x: s.name,
-      y: s.grants.reduce((acc, grantID) => acc + grants[grantID].amount, 0),
+      y: s.grants
+      .filter((grantID) => shareType === "" ? true : grants[grantID].type === shareType)
+      .reduce((acc, grantID) => acc + grants[grantID].amount, 0),
     }))
     .filter((e) => e.y > 0);
 }
 
-function getShareTypeData(shareholders: ShareholderData, grants: GrantData) {
+function getShareTypeData(shareholders: ShareholderData, grants: GrantData, shareType: ShareTypeFilter) {
   const shareTypes = ["common", "preferred"];
   return shareTypes.map((type) => ({
     x: type,
     y: Object.values(grants)
-      .filter((g) => g.type === type)
+      .filter((g) => shareType === "" ? true : g.type === shareType)
       .reduce((acc, g) => acc + g.amount, 0),
   }));
 }
@@ -72,15 +75,15 @@ function getMarketCap(shareholders: ShareholderData, grants: GrantData, sharepri
   }, 0);
 }
 
-function getDataByMode(mode: Group = "group", shareholders: ShareholderData, grants: GrantData) {
+function getDataByMode(mode: Group = "group", shareholders: ShareholderData, grants: GrantData, shareType: ShareTypeFilter) {
   if (mode === "group") {
-    return getGroupData(shareholders, grants);
+    return getGroupData(shareholders, grants, shareType);
   }
   if (mode === "investor") {
-    return getInvestorData(shareholders, grants);
+    return getInvestorData(shareholders, grants, shareType);
   }
   if (mode === "sharetype") {
-    return getShareTypeData(shareholders, grants)
+    return getShareTypeData(shareholders, grants, shareType)
   }
 }
 
@@ -92,6 +95,7 @@ export function Dashboard() {
   >({ name: "", group: "employee" });
   const { mode } = useParams<{ mode: Group }>();
   const { deauthroize } = useContext(AuthContext);
+  const [shareType, setShareType] = React.useState<'common' | 'preferred' | "">("");
 
   const shareholderMutation = useMutation<
     Shareholder,
@@ -200,13 +204,32 @@ export function Dashboard() {
           <IconButton aria-label='Log out' colorScheme='teal' onClick={() => { deauthroize() }}  icon={<ArrowForwardIcon />} />
         </Stack>
       </Stack>
+      <Stack direction="row" justify="space-between" alignItems="baseline">
+        <Heading
+          size="md"
+        >
+          Market Cap: ${getMarketCap(shareholder.data, grant.data, shareprice.data)}
+        </Heading>
+        <Stack direction="row">
+          <Text>Filter by Sharetype</Text>
+          <Select
+              value={shareType}
+              onChange={(e) => setShareType(e.target.value as 'common' | 'preferred')}
+            >
+            <option value=""></option>
+            <option value="common">Common</option>
+            <option value="preferred">Preferred</option>
+          </Select>
+        </Stack>
+      </Stack>
+      
       <Stack divider={<StackDivider />}>
-        <Heading>Market Cap: ${getMarketCap(shareholder.data, grant.data, shareprice.data)}</Heading>
+        <Heading></Heading>
       </Stack>
       {/* labels cut outside of container */}
       <VictoryPie
         colorScale="blue"
-        data={getDataByMode(mode, shareholder.data, grant.data)}
+        data={getDataByMode(mode, shareholder.data, grant.data, shareType)}
       />
       <Stack divider={<StackDivider />}>
         <Heading>Shareholders</Heading>

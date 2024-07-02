@@ -24,7 +24,7 @@ import {
   IconButton,
 } from "@chakra-ui/react";
 import { ReactComponent as Avatar } from "../assets/avatar-male.svg";
-import { Company, Grant, SharePrice, ShareType, Shareholder } from "../types";
+import { Grant, SharePrice, ShareType, Shareholder } from "../types";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import produce from "immer";
 import { CloseIcon } from "@chakra-ui/icons";
@@ -40,11 +40,6 @@ export function ShareholderPage() {
     "shareholders",
     () => fetch("/shareholders").then((e) => e.json())
   );
-  // This is needed by candidates, and put here early so candidates don't get caught up on react-query
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  // const companyQuery = useQuery<Company>("company", () =>
-  //   fetch("/company").then((e) => e.json())
-  // );
 
   const shareprice = useQuery<SharePrice>("shareprice", () =>
     fetch("/shareprice").then((e) => e.json())
