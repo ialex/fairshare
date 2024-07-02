@@ -64,17 +64,13 @@ function getMarketCap(shareholders: ShareholderData, grants: GrantData, sharepri
   return Object.values(shareholders).reduce((acc, s) => {
     return acc + s.grants.reduce(
       (acc, grantID) => {
-        // move this to a function
-        const price = grants[grantID].type === "common" ? shareprice?.common : shareprice?.preferred;
-        return acc + (grants[grantID].amount * price);
+        const price = grants[grantID].type === "common" ? shareprice?.common : shareprice?.preferred; 
+        return acc + grants[grantID].amount * price;
       },
       0
     );
   }, 0);
 }
-
-
-
 
 function getDataByMode(mode: Group = "group", shareholders: ShareholderData, grants: GrantData) {
   if (mode === "group") {
@@ -205,7 +201,7 @@ export function Dashboard() {
         </Stack>
       </Stack>
       <Stack divider={<StackDivider />}>
-        <Heading>Market Cap: {getMarketCap(shareholder.data, grant.data, shareprice.data)}</Heading>
+        <Heading>Market Cap: ${getMarketCap(shareholder.data, grant.data, shareprice.data)}</Heading>
       </Stack>
       {/* labels cut outside of container */}
       <VictoryPie
@@ -246,7 +242,7 @@ export function Dashboard() {
                   )}
                 </Td>
                 <Td data-testid={`shareholder-${s.name}-equity`}>
-                {s.grants.reduce(
+                ${s.grants.reduce(
                     (acc, grantID) => {
                       const price = grant.data[grantID].type === "common" ? shareprice.data?.common : shareprice.data?.preferred;
                       return acc + (grant.data[grantID].amount * price);
@@ -259,6 +255,7 @@ export function Dashboard() {
           </Tbody>
         </Table>
         <Button onClick={onOpen}>Add Shareholder</Button>
+        <Button as={Link} to="/dashboard/shareprice">Edit Shareprice</Button>
         {/* is it worth Refactoring this modal into his own component to use it in onboarding and here? */}
         <Modal isOpen={isOpen} onClose={onClose}>
           <ModalContent>

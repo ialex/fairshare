@@ -8,6 +8,7 @@ import { Start } from "./pages/Onboarding";
 import { Dashboard } from "./pages/Dashboard";
 import { Signin } from "./pages/Signin";
 import { ShareholderPage } from "./pages/Shareholder";
+import { SharePricePage } from "./pages/Shareprice";
 
 export const AuthContext = React.createContext<{
   user: User | undefined;
@@ -51,6 +52,7 @@ function App() {
                 element={<Navigate to="/dashboard/investor" replace={true} />}
               />
               <Route path="/dashboard/:mode" element={<Dashboard />} />
+              <Route path="/dashboard/shareprice" element={<SharePricePage />} />
               <Route
                 path="/shareholder/:shareholderID"
                 element={<ShareholderPage />}

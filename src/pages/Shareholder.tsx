@@ -1,5 +1,5 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import {
   Text,
   Heading,
@@ -21,11 +21,13 @@ import {
   AlertIcon,
   TableCaption,
   Select,
+  IconButton,
 } from "@chakra-ui/react";
 import { ReactComponent as Avatar } from "../assets/avatar-male.svg";
 import { Company, Grant, SharePrice, ShareType, Shareholder } from "../types";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import produce from "immer";
+import { CloseIcon } from "@chakra-ui/icons";
 
 export function ShareholderPage() {
   const queryClient = useQueryClient();
@@ -40,9 +42,9 @@ export function ShareholderPage() {
   );
   // This is needed by candidates, and put here early so candidates don't get caught up on react-query
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const companyQuery = useQuery<Company>("company", () =>
-    fetch("/company").then((e) => e.json())
-  );
+  // const companyQuery = useQuery<Company>("company", () =>
+  //   fetch("/company").then((e) => e.json())
+  // );
 
   const shareprice = useQuery<SharePrice>("shareprice", () =>
     fetch("/shareprice").then((e) => e.json())
@@ -128,6 +130,9 @@ export function ShareholderPage() {
         >
           Fair Share
         </Heading>
+        <Stack direction="row">
+          <IconButton as={Link} to="/dashboard" colorScheme="teal" aria-label='Dashboard'  icon={<CloseIcon />} />
+        </Stack>
       </Stack>
       <Heading size="md" textAlign="center">
         Shareholder
@@ -189,7 +194,7 @@ export function ShareholderPage() {
                   <Td>{new Date(issued).toLocaleDateString()}</Td>
                   <Td>{amount}</Td>
                   <Td>{type}</Td>
-                  <Td>{ type === "common" ? amount * shareprice.data?.common : amount * shareprice.data?.preferred }</Td>
+                  <Td>${ type === "common" ? amount * shareprice.data?.common : amount * shareprice.data?.preferred }</Td>
                 </Tr>
               );
             }
