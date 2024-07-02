@@ -23,7 +23,7 @@ import {
   Select,
 } from "@chakra-ui/react";
 import { ReactComponent as Avatar } from "../assets/avatar-male.svg";
-import { Company, Grant, ShareType, Shareholder } from "../types";
+import { Company, Grant, SharePrice, ShareType, Shareholder } from "../types";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import produce from "immer";
 
@@ -42,6 +42,10 @@ export function ShareholderPage() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const companyQuery = useQuery<Company>("company", () =>
     fetch("/company").then((e) => e.json())
+  );
+
+  const shareprice = useQuery<SharePrice>("shareprice", () =>
+    fetch("/shareprice").then((e) => e.json())
   );
 
   const [draftGrant, setDraftGrant] = React.useState<Omit<Grant, "id">>({
@@ -149,6 +153,17 @@ export function ShareholderPage() {
             </strong>{" "}
             shares
           </Text>
+          <Text fontSize="sm" fontWeight="thin">
+            <strong data-testid="shares-granted">
+              Equity: ${shareholder.grants.reduce(
+                (acc, grantID) => {
+                  const price = grantQuery.data[grantID].type === "common" ? shareprice.data?.common : shareprice.data?.preferred;
+                  return acc + (grantQuery.data[grantID].amount * price);
+                },
+                0
+              )}
+            </strong>
+          </Text>
         </Stack>
       </Stack>
       <Heading size="md" textAlign="center">
@@ -174,7 +189,7 @@ export function ShareholderPage() {
                   <Td>{new Date(issued).toLocaleDateString()}</Td>
                   <Td>{amount}</Td>
                   <Td>{type}</Td>
-                  <Td></Td>
+                  <Td>{ type === "common" ? amount * shareprice.data?.common : amount * shareprice.data?.preferred }</Td>
                 </Tr>
               );
             }

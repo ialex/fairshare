@@ -1,22 +1,23 @@
 import React from "react";
 import { render, screen, waitFor, waitForElementToBeRemoved } from "@testing-library/react";
-import {
-  CompanyStep,
-  OnboardingContext,
-  OnboardingFields,
-  ShareholderGrantsStep,
-  ShareholdersStep,
-  signupReducer,
-  UserStep,
-} from "./Onboarding";
 import { Navigate, Route, Routes } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
 import { getTestRouter, ThemeWrapper } from "../testutils";
+import { OnboardingFields } from "../types";
+import { signupReducer, OnboardingContext } from "../components/onboarding/onboardingContext";
+import { CompanyStep } from "../components/onboarding/companyStep";
+import { ShareholderGrantsStep } from "../components/onboarding/grantShareholderStep";
+import { ShareholdersStep } from "../components/onboarding/shareHolderStep";
+import { UserStep } from "../components/onboarding/userStep";
 
 const defaultOnboardingState = {
   userName: "",
   email: "",
   companyName: "",
+  shareprice: {
+    common: 0,
+    preferred: 0
+  },
   shareholders: {},
   grants: {},
 };

@@ -25,11 +25,19 @@ export interface Shareholder {
 }
 
 export type Group = "investor" | "sharetype" | "group";
+export type ShareholderGroup = 'investor' | 'founder' | 'employee';
+export type ShareholderData = { [dataID: number]: Shareholder };
+export type GrantData = { [dataID: number]: Grant };
+export interface SharePrice {
+  common: float;
+  preferred: float;
+}
 
 export interface OnboardingFields {
   companyName: string;
   userName: string;
   email: string;
+  shareprice: SharePrice;
   shareholders: { [shareholderID: number]: Shareholder };
   grants: { [grantID: number]: Grant };
 }
@@ -53,9 +61,14 @@ interface AddGrant {
   type: "addGrant";
   payload: { shareholderID: number; grant: Omit<Grant, "id"> };
 }
-type OnboardingAction =
+interface UpdateSharePriceAction {
+  type: "updateShareprice";
+  payload: SharePrice;
+}
+export type OnboardingAction =
   | UpdateUserAction
   | UpdateEmail
   | UpdateCompanyAction
   | AddShareholderAction
-  | AddGrant;
+  | AddGrant
+  | UpdateSharePriceAction;

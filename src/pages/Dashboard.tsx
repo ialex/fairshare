@@ -25,13 +25,11 @@ import {
   IconButton,
 } from "@chakra-ui/react";
 import { AuthContext } from "../App";
-import { Grant, Group, Shareholder } from "../types";
+import { GrantData, Group, SharePrice, Shareholder, ShareholderData } from "../types";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import produce from "immer";
 // import { group } from "console";
 
-type ShareholderData = { [dataID: number]: Shareholder };
-type GrantData = { [dataID: number]: Grant };
 // Moved this outside to avoid being declared on each render and make component harder to read
 function getGroupData(shareholders: ShareholderData, grants: GrantData) {
   return ["investor", "founder", "employee"].map((group) => ({
@@ -62,8 +60,23 @@ function getShareTypeData(shareholders: ShareholderData, grants: GrantData) {
   }));
 }
 
+function getMarketCap(shareholders: ShareholderData, grants: GrantData, shareprice: SharePrice = { common: 0, preferred: 0 }) {
+  return Object.values(shareholders).reduce((acc, s) => {
+    return acc + s.grants.reduce(
+      (acc, grantID) => {
+        // move this to a function
+        const price = grants[grantID].type === "common" ? shareprice?.common : shareprice?.preferred;
+        return acc + (grants[grantID].amount * price);
+      },
+      0
+    );
+  }, 0);
+}
+
+
+
+
 function getDataByMode(mode: Group = "group", shareholders: ShareholderData, grants: GrantData) {
-  console.log(mode);
   if (mode === "group") {
     return getGroupData(shareholders, grants);
   }
@@ -74,7 +87,6 @@ function getDataByMode(mode: Group = "group", shareholders: ShareholderData, gra
     return getShareTypeData(shareholders, grants)
   }
 }
-
 
 export function Dashboard() {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -115,6 +127,11 @@ export function Dashboard() {
   const grant = useQuery<GrantData, string>("grants", () =>
     fetch("/grants").then((e) => e.json())
   );
+
+  const shareprice = useQuery<SharePrice, string>("shareprice", () =>
+    fetch("/shareprice").then((e) => e.json())
+  );
+
   const shareholder = useQuery<ShareholderData>(
     "shareholders",
     () => fetch("/shareholders").then((e) => e.json())
@@ -187,6 +204,10 @@ export function Dashboard() {
           <IconButton aria-label='Log out' colorScheme='teal' onClick={() => { deauthroize() }}  icon={<ArrowForwardIcon />} />
         </Stack>
       </Stack>
+      <Stack divider={<StackDivider />}>
+        <Heading>Market Cap: {getMarketCap(shareholder.data, grant.data, shareprice.data)}</Heading>
+      </Stack>
+      {/* labels cut outside of container */}
       <VictoryPie
         colorScale="blue"
         data={getDataByMode(mode, shareholder.data, grant.data)}
@@ -200,6 +221,7 @@ export function Dashboard() {
               <Td>Group</Td>
               <Td>Grants</Td>
               <Td>Shares</Td>
+              <Td>Equity</Td>
             </Tr>
           </Thead>
           <Tbody>
@@ -223,11 +245,21 @@ export function Dashboard() {
                     0
                   )}
                 </Td>
+                <Td data-testid={`shareholder-${s.name}-equity`}>
+                {s.grants.reduce(
+                    (acc, grantID) => {
+                      const price = grant.data[grantID].type === "common" ? shareprice.data?.common : shareprice.data?.preferred;
+                      return acc + (grant.data[grantID].amount * price);
+                    },
+                    0
+                  )}
+                </Td>
               </Tr>
             ))}
           </Tbody>
         </Table>
         <Button onClick={onOpen}>Add Shareholder</Button>
+        {/* is it worth Refactoring this modal into his own component to use it in onboarding and here? */}
         <Modal isOpen={isOpen} onClose={onClose}>
           <ModalContent>
             <Stack p="10" as="form" onSubmit={submitNewShareholder}>

@@ -1,5 +1,5 @@
 import { rest } from "msw";
-import { Company, User, Shareholder, Grant } from "./types";
+import { Company, User, Shareholder, Grant, SharePrice } from "./types";
 
 function nextID(collection: { [key: number]: unknown }) {
   return (
@@ -15,17 +15,19 @@ export function getHandlers(
     company?: Company;
     users?: { [email: string]: User };
     shareholders?: { [id: number]: Shareholder };
+    shareprice?: SharePrice;
     grants?: { [id: number]: Grant };
   } = {},
   persist: boolean = false
 ) {
-  let { company, users = {}, shareholders = {}, grants = {} } = params;
+  let { company, users = {}, shareholders = {}, grants = {}, shareprice = {} } = params;
   if (persist) {
     storeState({
       shareholders,
       users,
       grants,
       company,
+      shareprice
     });
     setInterval(() => {
       if (localStorage.getItem("data")) {
@@ -34,6 +36,7 @@ export function getHandlers(
           users,
           grants,
           company,
+          shareprice
         });
       }
     }, 5000);
@@ -53,6 +56,13 @@ export function getHandlers(
     rest.post<Company, Company>("/company/new", (req, res, ctx) => {
       company = req.body;
       return res(ctx.json(company));
+    }),
+
+    rest.post<SharePrice>("/shareprice/update", (req, res, ctx) => {
+      const { common, preferred } = req.body;
+      shareprice = { common, preferred };
+
+      return res(ctx.json(shareprice));
     }),
 
     rest.post<Omit<Shareholder, "id">>(
@@ -127,6 +137,10 @@ export function getHandlers(
 
     rest.get("/company", (req, res, ctx) => {
       return res(ctx.json(company));
+    }),
+
+    rest.get("/shareprice", (req, res, ctx) => {
+      return res(ctx.json(shareprice));
     }),
 
     rest.post<Shareholder>(
