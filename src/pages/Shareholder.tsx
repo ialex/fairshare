@@ -20,9 +20,10 @@ import {
   AlertTitle,
   AlertIcon,
   TableCaption,
+  Select,
 } from "@chakra-ui/react";
 import { ReactComponent as Avatar } from "../assets/avatar-male.svg";
-import { Company, Grant, Shareholder } from "../types";
+import { Company, Grant, ShareType, Shareholder } from "../types";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import produce from "immer";
 
@@ -186,7 +187,7 @@ export function ShareholderPage() {
         </TableCaption>
       </Table>
       <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalContent>
+        <ModalContent border="5px solid teal">
           <Stack p="10" as="form" onSubmit={submitGrant}>
             <Text>
               A <strong>Grant</strong> is any occasion where new shares are
@@ -204,6 +205,19 @@ export function ShareholderPage() {
                 }
               />
             </FormControl>
+            <Select
+                placeholder="Type of share"
+                value={draftGrant.type}
+                onChange={(e) =>
+                  setDraftGrant((g) => ({
+                    ...g,
+                    type: e.target.value as ShareType,
+                  }))
+                }
+              >
+                <option value="common">Common</option>
+                <option value="preferred">Preferred</option>
+              </Select>
             <FormControl>
               <Input
                 variant="flushed"

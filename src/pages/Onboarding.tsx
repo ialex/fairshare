@@ -33,7 +33,7 @@ import {
 } from "@chakra-ui/react";
 import produce from "immer";
 import { useContext } from "react";
-import { Company, Grant, Shareholder, User } from "../types";
+import { Company, Grant, OnboardingAction, OnboardingFields, ShareType, Shareholder, User } from "../types";
 import { useMutation, useQueryClient } from "react-query";
 import { AuthContext } from "../App";
 
@@ -265,6 +265,7 @@ export function ShareholderGrantsStep() {
         <Thead>
           <Tr>
             <Th>Occasion</Th>
+            <Th>Type</Th>
             <Th>Amount</Th>
             <Th>Date</Th>
             <Th></Th>
@@ -274,6 +275,7 @@ export function ShareholderGrantsStep() {
           {shareholder.grants.map((gid) => (
             <Tr key={gid}>
               <Td>{grants[gid].name}</Td>
+              <Td>{grants[gid].type}</Td>
               <Td>{grants[gid].amount}</Td>
               <Td>{grants[gid].issued}</Td>
             </Tr>
@@ -291,7 +293,7 @@ export function ShareholderGrantsStep() {
         Add Grant
       </Button>
       <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalContent>
+        <ModalContent border="5px solid teal">
           <Stack p="10" as="form" onSubmit={submitGrant}>
             <Text>
               A <strong>Grant</strong> is any occasion where new shares are
@@ -309,6 +311,19 @@ export function ShareholderGrantsStep() {
                 }
               />
             </FormControl>
+            <Select
+                placeholder="Type of share"
+                value={draftGrant.type}
+                onChange={(e) =>
+                  setDraftGrant((g) => ({
+                    ...g,
+                    type: e.target.value as ShareType,
+                  }))
+                }
+              >
+                <option value="common">Common</option>
+                <option value="preferred">Preferred</option>
+              </Select>
             <FormControl>
               <Input
                 variant="flushed"
@@ -419,39 +434,7 @@ export function DoneStep() {
     </Stack>
   );
 }
-export interface OnboardingFields {
-  companyName: string;
-  userName: string;
-  email: string;
-  shareholders: { [shareholderID: number]: Shareholder };
-  grants: { [grantID: number]: Grant };
-}
-interface UpdateUserAction {
-  type: "updateUser";
-  payload: string;
-}
-interface UpdateEmail {
-  type: "updateEmail";
-  payload: string;
-}
-interface UpdateCompanyAction {
-  type: "updateCompany";
-  payload: string;
-}
-interface AddShareholderAction {
-  type: "addShareholder";
-  payload: Omit<Shareholder, "id" | "grants">;
-}
-interface AddGrant {
-  type: "addGrant";
-  payload: { shareholderID: number; grant: Omit<Grant, "id"> };
-}
-type OnboardingAction =
-  | UpdateUserAction
-  | UpdateEmail
-  | UpdateCompanyAction
-  | AddShareholderAction
-  | AddGrant;
+
 export function signupReducer(
   state: OnboardingFields,
   action: OnboardingAction
