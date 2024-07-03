@@ -154,7 +154,7 @@ export function ShareholderPage() {
             shares
           </Text>
           <Text fontSize="sm" fontWeight="thin">
-            <strong data-testid="shares-granted">
+            <strong data-testid="equity-granted">
               Equity: ${shareholder.grants.reduce(
                 (acc, grantID) => {
                   const price = grantQuery.data[grantID].type === "common" ? shareprice.data?.common : shareprice.data?.preferred;

@@ -23,6 +23,8 @@ export function ShareholderGrantsStep() {
     const nextLink = !shareholders[shareholder.id + 1]
       ? `../done`
       : `/start/grants/${shareholder.id + 1}`;
+      // This works using the app but breaks on test didnt figure it out a solution
+      // that works for both cases using ../../grants/${shareholder.id + 1} works on tests
   
     function submitGrant(e: React.FormEvent) {
       e.preventDefault();

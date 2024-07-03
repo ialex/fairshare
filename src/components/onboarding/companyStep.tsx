@@ -10,15 +10,16 @@ export function CompanyStep() {
   
     function onSubmit(e: React.FormEvent) {
       e.preventDefault();
-      navigate("/start/shareholders");
+      navigate("../shareholders");
     }
   
-    // UX show error if company name is empty button is not disabled
     useEffect(() => {
       if (!email) {
         navigate('/start/user');
       }
     }, [email, navigate]);
+
+    const isDataValid = companyName !== "" && shareprice.common > 0 && shareprice.preferred > 0;
   
     return (
       <Stack as="form" onSubmit={onSubmit} spacing="4">
@@ -37,7 +38,7 @@ export function CompanyStep() {
           <FormLabel>Common Share Price</FormLabel>
           <Input
             type="number"
-            step="0.1"
+            name="commonSharePrice"
             placeholder="Common Share Price"
             onChange={(e) =>
               dispatch({ type: "updateShareprice", payload: {...shareprice, common: parseFloat(e.target.value) } })
@@ -49,17 +50,17 @@ export function CompanyStep() {
           <FormLabel>Preferred Share Price</FormLabel>
           <Input
             type="number"
-            step="0.1"
+            name="preferredSharePrice"
             placeholder="Preferred Share Price"
             onChange={(e) =>
-              dispatch({ type: "updateShareprice", payload: {...shareprice, preferred: parseFloat(e.target.value) }})
+              dispatch({ type: "updateShareprice", payload: {...shareprice, preferred: parseFloat(e.target.value)}})
             }
             value={shareprice.preferred}
           />
         </FormControl>
-        <Button type="submit" colorScheme="teal" disabled={!companyName.length}>
+        {isDataValid && <Button type="submit" colorScheme="teal">
           Next
-        </Button>
+        </Button>}
       </Stack>
     );
   }

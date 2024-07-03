@@ -67,7 +67,7 @@ export function SharePricePage() {
     return (
       <Alert status="error">
         <AlertIcon />
-        <AlertTitle>Error: sharepriceQuery.error</AlertTitle>
+        <AlertTitle>Error: {sharepriceQuery["error"]}</AlertTitle>
       </Alert>
     );
   }

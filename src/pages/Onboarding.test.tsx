@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, waitFor, waitForElementToBeRemoved } from "@testing-library/react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
 import { getTestRouter, ThemeWrapper } from "../testutils";
 import { OnboardingFields } from "../types";
@@ -9,6 +9,9 @@ import { CompanyStep } from "../components/onboarding/companyStep";
 import { ShareholderGrantsStep } from "../components/onboarding/grantShareholderStep";
 import { ShareholdersStep } from "../components/onboarding/shareHolderStep";
 import { UserStep } from "../components/onboarding/userStep";
+import { useQueryClient, useMutation } from "react-query";
+import { AuthContext } from "../App";
+import { DoneStep } from "../components/onboarding/doneStep";
 
 const defaultOnboardingState = {
   userName: "",
@@ -84,7 +87,18 @@ describe("Onboarding", () => {
     const Router = getTestRouter("/company");
     render(
       <Router>
-        <Page />
+        <Page initialState={{
+            ...defaultOnboardingState,
+            companyName: "",
+            email: "alejandro@admiral.com",
+            shareprice: {
+              common: 0,
+              preferred: 0
+            },
+            shareholders: {
+              "0": { name: "Jenn", group: "founder", grants: [], id: 0 },
+            },
+          }}/>
       </Router>,
       { wrapper: ThemeWrapper }
     );
@@ -94,6 +108,14 @@ describe("Onboarding", () => {
     });
     await userEvent.type(companyNameField, "Admiral");
     expect(companyNameField).toHaveValue("Admiral");
+
+    const commonSharePriceField = screen.getByLabelText("Common Share Price");
+    await userEvent.type(commonSharePriceField, "5");
+    expect(commonSharePriceField).toHaveValue(5);
+
+    const preferredSharePriceField = screen.getByLabelText("Preferred Share Price");
+    await userEvent.type(preferredSharePriceField, "10");
+    expect(preferredSharePriceField).toHaveValue(10);
 
     const nextButton = screen.getByRole("button", { name: "Next" });
     await userEvent.click(nextButton);
@@ -108,6 +130,11 @@ describe("Onboarding", () => {
           initialState={{
             ...defaultOnboardingState,
             companyName: "My Company",
+            email: "alejandro@admiral.com",
+            shareprice: {
+              common: 1,
+              preferred: 1
+            },
             shareholders: {
               "0": { name: "Jenn", group: "founder", grants: [], id: 0 },
             },
@@ -164,6 +191,11 @@ describe("Onboarding", () => {
           initialState={{
             ...defaultOnboardingState,
             companyName: "My Company",
+            email: "alejandro@admiral.com",
+            shareprice: {
+              common: 1,
+              preferred: 1
+            },
             shareholders: {
               0: { name: "Jenn", group: "founder", grants: [1], id: 0 },
               1: { name: "Aaron", group: "employee", grants: [], id: 1 },

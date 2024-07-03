@@ -25,67 +25,11 @@ import {
   IconButton,
 } from "@chakra-ui/react";
 import { AuthContext } from "../App";
-import { GrantData, Group, SharePrice, ShareTypeFilter, Shareholder, ShareholderData } from "../types";
+import { GrantData, Group, SharePrice, Shareholder, ShareholderData } from "../types";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import produce from "immer";
+import { getMarketCap, getDataByMode } from "../utils";
 // import { group } from "console";
-
-// Moved this outside to avoid being declared on each render and make component harder to read
-function getGroupData(shareholders: ShareholderData, grants: GrantData, shareType: ShareTypeFilter) {
-  return ["investor", "founder", "employee"].map((group) => ({
-    x: group,
-    y: Object.values(shareholders)
-      .filter((s) => s.group === group)
-      .flatMap((s) => s.grants)
-      .filter((grantID) => shareType === "" ? true : grants[grantID].type === shareType)
-      .reduce((acc, grantID) => acc + grants[grantID].amount, 0),
-  }));
-}
-
-function getInvestorData(shareholders: ShareholderData, grants: GrantData, shareType: ShareTypeFilter) {
-  return Object.values(shareholders)
-    .map((s) => ({
-      x: s.name,
-      y: s.grants
-      .filter((grantID) => shareType === "" ? true : grants[grantID].type === shareType)
-      .reduce((acc, grantID) => acc + grants[grantID].amount, 0),
-    }))
-    .filter((e) => e.y > 0);
-}
-
-function getShareTypeData(shareholders: ShareholderData, grants: GrantData, shareType: ShareTypeFilter) {
-  const shareTypes = ["common", "preferred"];
-  return shareTypes.map((type) => ({
-    x: type,
-    y: Object.values(grants)
-      .filter((g) => shareType === "" ? true : g.type === shareType)
-      .reduce((acc, g) => acc + g.amount, 0),
-  }));
-}
-
-function getMarketCap(shareholders: ShareholderData, grants: GrantData, shareprice: SharePrice = { common: 0, preferred: 0 }) {
-  return Object.values(shareholders).reduce((acc, s) => {
-    return acc + s.grants.reduce(
-      (acc, grantID) => {
-        const price = grants[grantID].type === "common" ? shareprice?.common : shareprice?.preferred; 
-        return acc + grants[grantID].amount * price;
-      },
-      0
-    );
-  }, 0);
-}
-
-function getDataByMode(mode: Group = "group", shareholders: ShareholderData, grants: GrantData, shareType: ShareTypeFilter) {
-  if (mode === "group") {
-    return getGroupData(shareholders, grants, shareType);
-  }
-  if (mode === "investor") {
-    return getInvestorData(shareholders, grants, shareType);
-  }
-  if (mode === "sharetype") {
-    return getShareTypeData(shareholders, grants, shareType)
-  }
-}
 
 export function Dashboard() {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -229,7 +173,7 @@ export function Dashboard() {
       {/* labels cut outside of container */}
       <VictoryPie
         colorScale="blue"
-        data={getDataByMode(mode, shareholder.data, grant.data, shareType)}
+        data={getDataByMode(mode, shareholder.data, grant.data, shareType, shareprice.data)}
       />
       <Stack divider={<StackDivider />}>
         <Heading>Shareholders</Heading>
@@ -292,6 +236,7 @@ export function Dashboard() {
               />
               <Select
                 placeholder="Type of shareholder"
+                data-testid="shareholder-combobox"
                 value={newShareholder.group}
                 onChange={(e) =>
                   setNewShareholder((s) => ({
