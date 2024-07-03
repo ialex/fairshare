@@ -1,8 +1,4 @@
-import {
-  GrantData,
-  SharePrice,
-  ShareholderData,
-} from "./types";
+import { GrantData, SharePrice, ShareholderData } from "./types";
 import {
   getGroupData,
   getInvestorData,
@@ -176,9 +172,7 @@ describe("getInvestorData", () => {
       "common",
       mockSharePrice
     );
-    expect(result).toEqual([
-      { x: "Alejandro V", y: 100 },
-    ]);
+    expect(result).toEqual([{ x: "Alejandro V", y: 100 }]);
   });
 
   it("should calculate investor data correctly with 'preferred' share type filter", () => {
@@ -188,62 +182,70 @@ describe("getInvestorData", () => {
       "preferred",
       mockSharePrice
     );
-    expect(result).toEqual([
-      { x: "Nathan", y: 200 },
-    ]);
+    expect(result).toEqual([{ x: "Nathan", y: 200 }]);
   });
 });
 
 describe("getShareTypeData", () => {
-    const shareholders: ShareholderData = {
-      "1": {
-        name: "Alejandro V",
-        grants: [1],
-        id: 1,
-        group: "founder",
-      },
-      "2": {
-        name: "Nathan",
-        grants: [2],
-        id: 1,
-        group: "investor",
-      },
-    };
-  
-    const grants: GrantData = {
-      1: { name: "buy", issued: "2024-07-05", amount: 10, id: 1, type: "common" },
-      2: {
-        name: "buy",
-        issued: "2024-07-05",
-        amount: 10,
-        id: 2,
-        type: "preferred",
-      },
-    };
-  
-    const mockSharePrice: SharePrice = { common: 10, preferred: 20 };
-  
-    it("should calculate share type data correctly with no share type filter", () => {
-      const result = getShareTypeData(shareholders, grants, "", mockSharePrice);
-      expect(result).toEqual([
-        { x: "common", y: 100 },
-        { x: "preferred", y: 200 },
-      ]);
-    });
-  
-    it("should calculate share type data correctly with 'common' share type filter", () => {
-      const result = getShareTypeData(shareholders, grants, "common", mockSharePrice);
-      expect(result).toEqual([
-        { x: "common", y: 100 },
-        { x: "preferred", y: 0 },
-      ]);
-    });
-  
-    it("should calculate share type data correctly with 'preferred' share type filter", () => {
-      const result = getShareTypeData(shareholders, grants, "preferred", mockSharePrice);
-      expect(result).toEqual([
-        { x: "common", y: 0 },
-        { x: "preferred", y: 200 },
-      ]);
-    });
+  const shareholders: ShareholderData = {
+    "1": {
+      name: "Alejandro V",
+      grants: [1],
+      id: 1,
+      group: "founder",
+    },
+    "2": {
+      name: "Nathan",
+      grants: [2],
+      id: 1,
+      group: "investor",
+    },
+  };
+
+  const grants: GrantData = {
+    1: { name: "buy", issued: "2024-07-05", amount: 10, id: 1, type: "common" },
+    2: {
+      name: "buy",
+      issued: "2024-07-05",
+      amount: 10,
+      id: 2,
+      type: "preferred",
+    },
+  };
+
+  const mockSharePrice: SharePrice = { common: 10, preferred: 20 };
+
+  it("should calculate share type data correctly with no share type filter", () => {
+    const result = getShareTypeData(shareholders, grants, "", mockSharePrice);
+    expect(result).toEqual([
+      { x: "common", y: 100 },
+      { x: "preferred", y: 200 },
+    ]);
   });
+
+  it("should calculate share type data correctly with 'common' share type filter", () => {
+    const result = getShareTypeData(
+      shareholders,
+      grants,
+      "common",
+      mockSharePrice
+    );
+    expect(result).toEqual([
+      { x: "common", y: 100 },
+      { x: "preferred", y: 0 },
+    ]);
+  });
+
+  it("should calculate share type data correctly with 'preferred' share type filter", () => {
+    const result = getShareTypeData(
+      shareholders,
+      grants,
+      "preferred",
+      mockSharePrice
+    );
+    expect(result).toEqual([
+      { x: "common", y: 0 },
+      { x: "preferred", y: 200 },
+    ]);
+  });
+});

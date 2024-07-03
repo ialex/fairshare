@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { getTestRouter, server, ThemeWrapper } from "../testutils";
 import { SharePricePage } from "./Shareprice";
 import { Route, Routes } from "react-router";
@@ -21,8 +16,8 @@ describe("SharePricePage", () => {
           0: { name: "Tonya", grants: [1, 2], group: "founder", id: 0 },
         },
         shareprice: {
-            common: 1,
-            preferred: 1
+          common: 1,
+          preferred: 1,
         },
         grants: {
           1: {
@@ -48,10 +43,7 @@ describe("SharePricePage", () => {
     render(
       <Router>
         <Routes>
-          <Route
-            path="/shareprice"
-            element={<SharePricePage />}
-          />
+          <Route path="/shareprice" element={<SharePricePage />} />
         </Routes>
       </Router>,
       { wrapper: ThemeWrapper }
@@ -63,9 +55,10 @@ describe("SharePricePage", () => {
     await userEvent.type(commonSharePriceField, "5");
     expect(commonSharePriceField).toHaveValue(5);
 
-    const preferredSharePriceField = screen.getByLabelText("Preferred Share Price");
+    const preferredSharePriceField = screen.getByLabelText(
+      "Preferred Share Price"
+    );
     await userEvent.type(preferredSharePriceField, "10");
     expect(preferredSharePriceField).toHaveValue(10);
   });
-
 });

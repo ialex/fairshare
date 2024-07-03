@@ -67,7 +67,7 @@ export function getShareTypeData(
   return shareTypes.map((t) => ({
     x: t,
     y: Object.values(grants)
-      .filter(g => g.type === t)
+      .filter((g) => g.type === t)
       .reduce((acc, g) => {
         if (shareType && g.type !== shareType) {
           return 0;

@@ -13,8 +13,6 @@ export function UserStep() {
       navigate("../company");
     }
   
-    // Show error if no username or email provided
-  
     return (
       <Stack as="form" onSubmit={onSubmt} spacing="4">
         <FormControl id="userName" size="lg" color="teal.400">
