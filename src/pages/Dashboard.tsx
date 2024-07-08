@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import { VictoryPie } from "victory";
 import { Link, useParams } from "react-router-dom";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
@@ -22,10 +22,14 @@ import {
   AlertTitle,
   AlertIcon,
   Select,
+  IconButton,
 } from "@chakra-ui/react";
-import { Grant, Shareholder } from "../types";
+import { AuthContext } from "../App";
+import { GrantData, Group, SharePrice, Shareholder, ShareholderData } from "../types";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import produce from "immer";
+import { getMarketCap, getDataByMode } from "../utils";
+// import { group } from "console";
 
 export function Dashboard() {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -33,7 +37,9 @@ export function Dashboard() {
   const [newShareholder, setNewShareholder] = React.useState<
     Omit<Shareholder, "id" | "grants">
   >({ name: "", group: "employee" });
-  const { mode } = useParams();
+  const { mode } = useParams<{ mode: Group }>();
+  const { deauthroize } = useContext(AuthContext);
+  const [shareType, setShareType] = React.useState<'common' | 'preferred' | "">("");
 
   const shareholderMutation = useMutation<
     Shareholder,
@@ -62,11 +68,15 @@ export function Dashboard() {
     }
   );
 
-  // TODO: using this dictionary thing a lot... hmmm
-  const grant = useQuery<{ [dataID: number]: Grant }, string>("grants", () =>
+  const grant = useQuery<GrantData, string>("grants", () =>
     fetch("/grants").then((e) => e.json())
   );
-  const shareholder = useQuery<{ [dataID: number]: Shareholder }>(
+
+  const shareprice = useQuery<SharePrice, string>("shareprice", () =>
+    fetch("/shareprice").then((e) => e.json())
+  );
+
+  const shareholder = useQuery<ShareholderData>(
     "shareholders",
     () => fetch("/shareholders").then((e) => e.json())
   );
@@ -89,35 +99,6 @@ export function Dashboard() {
         <AlertTitle>Failed to get any data</AlertTitle>
       </Alert>
     );
-  }
-
-  // TODO: why are these inline?
-  function getGroupData() {
-    if (!shareholder.data || !grant.data) {
-      return [];
-    }
-    return ["investor", "founder", "employee"].map((group) => ({
-      x: group,
-      y: Object.values(shareholder?.data ?? {})
-        .filter((s) => s.group === group)
-        .flatMap((s) => s.grants)
-        .reduce((acc, grantID) => acc + grant.data[grantID].amount, 0),
-    }));
-  }
-
-  function getInvestorData() {
-    if (!shareholder.data || !grant.data) {
-      return [];
-    }
-    return Object.values(shareholder.data)
-      .map((s) => ({
-        x: s.name,
-        y: s.grants.reduce(
-          (acc, grantID) => acc + grant.data[grantID].amount,
-          0
-        ),
-      }))
-      .filter((e) => e.y > 0);
   }
 
   async function submitNewShareholder(e: React.FormEvent) {
@@ -155,11 +136,44 @@ export function Dashboard() {
           >
             By Group
           </Button>
+          <Button
+            colorScheme="teal"
+            as={Link}
+            to="/dashboard/sharetype"
+            variant="ghost"
+            isActive={mode === "sharetype"}
+          >
+            By Share Type
+          </Button>
+          <IconButton aria-label='Log out' colorScheme='teal' onClick={() => { deauthroize() }}  icon={<ArrowForwardIcon />} />
         </Stack>
       </Stack>
+      <Stack direction="row" justify="space-between" alignItems="baseline">
+        <Heading
+          size="md"
+        >
+          Market Cap: ${getMarketCap(shareholder.data, grant.data, shareprice.data)}
+        </Heading>
+        <Stack direction="row">
+          <Text>Filter by Sharetype</Text>
+          <Select
+              value={shareType}
+              onChange={(e) => setShareType(e.target.value as 'common' | 'preferred')}
+            >
+            <option value=""></option>
+            <option value="common">Common</option>
+            <option value="preferred">Preferred</option>
+          </Select>
+        </Stack>
+      </Stack>
+      
+      <Stack divider={<StackDivider />}>
+        <Heading></Heading>
+      </Stack>
+      {/* labels cut outside of container */}
       <VictoryPie
         colorScale="blue"
-        data={mode === "investor" ? getGroupData() : getInvestorData()}
+        data={getDataByMode(mode, shareholder.data, grant.data, shareType, shareprice.data)}
       />
       <Stack divider={<StackDivider />}>
         <Heading>Shareholders</Heading>
@@ -170,6 +184,7 @@ export function Dashboard() {
               <Td>Group</Td>
               <Td>Grants</Td>
               <Td>Shares</Td>
+              <Td>Equity</Td>
             </Tr>
           </Thead>
           <Tbody>
@@ -193,11 +208,22 @@ export function Dashboard() {
                     0
                   )}
                 </Td>
+                <Td data-testid={`shareholder-${s.name}-equity`}>
+                ${s.grants.reduce(
+                    (acc, grantID) => {
+                      const price = grant.data[grantID].type === "common" ? shareprice.data?.common : shareprice.data?.preferred;
+                      return acc + (grant.data[grantID].amount * price);
+                    },
+                    0
+                  )}
+                </Td>
               </Tr>
             ))}
           </Tbody>
         </Table>
         <Button onClick={onOpen}>Add Shareholder</Button>
+        <Button as={Link} to="/dashboard/shareprice">Edit Shareprice</Button>
+        {/* is it worth Refactoring this modal into his own component to use it in onboarding and here? */}
         <Modal isOpen={isOpen} onClose={onClose}>
           <ModalContent>
             <Stack p="10" as="form" onSubmit={submitNewShareholder}>
@@ -210,6 +236,7 @@ export function Dashboard() {
               />
               <Select
                 placeholder="Type of shareholder"
+                data-testid="shareholder-combobox"
                 value={newShareholder.group}
                 onChange={(e) =>
                   setNewShareholder((s) => ({

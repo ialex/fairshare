@@ -1,5 +1,5 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import {
   Text,
   Heading,
@@ -20,11 +20,14 @@ import {
   AlertTitle,
   AlertIcon,
   TableCaption,
+  Select,
+  IconButton,
 } from "@chakra-ui/react";
 import { ReactComponent as Avatar } from "../assets/avatar-male.svg";
-import { Company, Grant, Shareholder } from "../types";
+import { Grant, SharePrice, ShareType, Shareholder } from "../types";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import produce from "immer";
+import { CloseIcon } from "@chakra-ui/icons";
 
 export function ShareholderPage() {
   const queryClient = useQueryClient();
@@ -37,10 +40,9 @@ export function ShareholderPage() {
     "shareholders",
     () => fetch("/shareholders").then((e) => e.json())
   );
-  // This is needed by candidates, and put here early so candidates don't get caught up on react-query
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const companyQuery = useQuery<Company>("company", () =>
-    fetch("/company").then((e) => e.json())
+
+  const shareprice = useQuery<SharePrice>("shareprice", () =>
+    fetch("/shareprice").then((e) => e.json())
   );
 
   const [draftGrant, setDraftGrant] = React.useState<Omit<Grant, "id">>({
@@ -123,6 +125,9 @@ export function ShareholderPage() {
         >
           Fair Share
         </Heading>
+        <Stack direction="row">
+          <IconButton as={Link} to="/dashboard" colorScheme="teal" aria-label='Dashboard'  icon={<CloseIcon />} />
+        </Stack>
       </Stack>
       <Heading size="md" textAlign="center">
         Shareholder
@@ -147,6 +152,17 @@ export function ShareholderPage() {
               )}
             </strong>{" "}
             shares
+          </Text>
+          <Text fontSize="sm" fontWeight="thin">
+            <strong data-testid="equity-granted">
+              Equity: ${shareholder.grants.reduce(
+                (acc, grantID) => {
+                  const price = grantQuery.data[grantID].type === "common" ? shareprice.data?.common : shareprice.data?.preferred;
+                  return acc + (grantQuery.data[grantID].amount * price);
+                },
+                0
+              )}
+            </strong>
           </Text>
         </Stack>
       </Stack>
@@ -173,7 +189,7 @@ export function ShareholderPage() {
                   <Td>{new Date(issued).toLocaleDateString()}</Td>
                   <Td>{amount}</Td>
                   <Td>{type}</Td>
-                  <Td></Td>
+                  <Td>${ type === "common" ? amount * shareprice.data?.common : amount * shareprice.data?.preferred }</Td>
                 </Tr>
               );
             }
@@ -186,7 +202,7 @@ export function ShareholderPage() {
         </TableCaption>
       </Table>
       <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalContent>
+        <ModalContent border="5px solid teal">
           <Stack p="10" as="form" onSubmit={submitGrant}>
             <Text>
               A <strong>Grant</strong> is any occasion where new shares are
@@ -204,6 +220,19 @@ export function ShareholderPage() {
                 }
               />
             </FormControl>
+            <Select
+                placeholder="Type of share"
+                value={draftGrant.type}
+                onChange={(e) =>
+                  setDraftGrant((g) => ({
+                    ...g,
+                    type: e.target.value as ShareType,
+                  }))
+                }
+              >
+                <option value="common">Common</option>
+                <option value="preferred">Preferred</option>
+              </Select>
             <FormControl>
               <Input
                 variant="flushed"

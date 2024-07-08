@@ -128,6 +128,14 @@ describe("Dashboard", () => {
     const handlers = getHandlers(
       {
         company: { name: "My Company" },
+        users: {"alejandro@admiral.com": {
+          name: "Alejandro V",
+          email: "alejandro@admiral.com"
+        }},
+        shareprice: {
+          common: 1,
+          preferred: 1
+        },
         shareholders: {
           0: { name: "Tonya", grants: [1, 2], group: "founder", id: 0 },
           1: { name: "Tommy", grants: [3], group: "employee", id: 1 },
@@ -292,7 +300,7 @@ describe("Dashboard", () => {
     await userEvent.click(addShareholderButton);
 
     const shareholderNameInput = screen.getByRole("textbox");
-    const groupCombo = screen.getByRole("combobox");
+    const groupCombo = screen.getByTestId("shareholder-combobox");
     const saveButton = screen.getByRole("button", { name: /Save/ });
     await userEvent.click(shareholderNameInput);
     await userEvent.paste("Mike");
@@ -303,6 +311,6 @@ describe("Dashboard", () => {
     await waitFor(() => expect(shareholderNameInput).not.toBeVisible());
     expect(
       await screen.findByTestId("shareholder-Mike-group")
-    ).toHaveTextContent("employee");
+    ).toHaveTextContent("investor");
   }, 10000);
 });
